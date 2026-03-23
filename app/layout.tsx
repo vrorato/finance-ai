@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "./_components/auth-provider";
-import { NavbarWrapper } from "./_components/navbar-wrapper";
+import { SidebarWrapper } from "./_components/sidebar-wrapper";
+import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -28,12 +29,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <div className="flex h-full flex-col overflow-hidden">
-            <NavbarWrapper />
-            <div className="flex-1 overflow-hidden">{children}</div>
+          <div className="flex h-screen overflow-hidden">
+            <SidebarWrapper />
+            <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
+              <DashboardHeaderWrapper />
+              <main className="flex-1 overflow-y-auto p-8">
+                {children}
+              </main>
+            </div>
           </div>
         </AuthProvider>
       </body>

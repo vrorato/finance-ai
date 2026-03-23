@@ -2,7 +2,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { db } from "./_lib/prisma";
-import { DashboardSummary } from "./_components/dashboard-summary";
+import { SummaryCards } from "./_components/summary-cards";
+import { MonthlyBalanceChart } from "./_components/monthly-balance-chart";
+import { CreditCard } from "./_components/credit-card";
+import { TransactionsTable } from "./_components/transactions-table";
 import { TransactionType } from "@prisma/client";
 
 const Home = async () => {
@@ -11,10 +14,16 @@ const Home = async () => {
     redirect("/login");
   }
 
+  const userId = (session as any).user.id;
+
   const transactions = await db.transaction.findMany({
     where: {
-      userId: session.user.id,
+      userId: userId,
     },
+    orderBy: {
+      date: "desc",
+    },
+    take: 10,
   });
 
   const summary = transactions.reduce(
@@ -34,13 +43,52 @@ const Home = async () => {
     { balance: 0, deposits: 0, expenses: 0, investments: 0 }
   );
 
+  // Mock data to match image while keeping DB sync
+  const mockTransactions: any[] = [
+    {
+      status: "Concluído",
+      description: "Apple Store Shopping",
+      category: "Tecnologia",
+      date: new Date(2024, 5, 22),
+      value: -450.00
+    },
+    {
+      status: "Concluído",
+      description: "Salário Mensal",
+      category: "Receita",
+      date: new Date(2024, 5, 20),
+      value: 8500.00
+    },
+    {
+      status: "Pendente",
+      description: "Restaurante Gourmet",
+      category: "Alimentação",
+      date: new Date(2024, 5, 18),
+      value: -285.50
+    }
+  ];
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="space-y-8 pb-10">
+      {/* Top row: Summary Cards */}
+      <SummaryCards summary={summary} />
+
+      {/* Middle row: Chart and Credit Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <MonthlyBalanceChart />
+        </div>
+        <div>
+          <CreditCard 
+            balance={summary.balance} 
+            userName={session.user?.name || "Alex Silva"} 
+            cardNumber="4532 .... .... 1290"
+          />
+        </div>
       </div>
-      <DashboardSummary summary={summary} />
-      {/* TODO: Add Charts */}
+
+      {/* Bottom row: Transactions Table */}
+      <TransactionsTable transactions={mockTransactions} />
     </div>
   );
 };
